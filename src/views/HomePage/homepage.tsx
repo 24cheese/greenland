@@ -1,9 +1,8 @@
-// HomePage.tsx
 import Layout from '../../layouts/Layout';
 import './homepage.css';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 import { Container, Row, Col } from 'react-bootstrap';
@@ -13,11 +12,6 @@ import { Link, NavLink } from 'react-router-dom';
 import Slider from 'react-slick';
 
 import about_1 from '../../assets/image/about-1.jpg';
-import section_7_1 from '../../assets/image/section_4_1.jpeg';
-import section_7_2 from '../../assets/image/section_4_2.jpg';
-import section_7_3 from '../../assets/image/section_4_3.jpg';
-import section_7_4 from '../../assets/image/section_4_4.jpg';
-import section_7_5 from '../../assets/image/section_4_5.png';
 import project_1 from '../../assets/image/project_1.jpg';
 import project_2 from '../../assets/image/project_2.jpg';
 import project_3 from '../../assets/image/project_3.jpg';
@@ -178,58 +172,16 @@ const HomePage = () => {
          toast.error('Gửi email xác nhận thất bại. Vui lòng thử lại!');
       }
    };
-   
-   // const validateName = (name : string) => {
-   //    return /^[a-zA-Z\s]*$/.test(name);
-   // };
-
-   // const validateEmail = (email : string) => {
-   //    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-   // };
-
-   // const handleFirstNameChange = (e : any) => {
-   //    const value = e.target.value;
-   //    setFirstName(value);
-   //    validateNames(value, lastName);
-   // };
-
-   // const handleLastNameChange = (e : any) => {
-   //    const value = e.target.value;
-   //    setLastName(value);
-   //    validateNames(firstName, value);
-   // };
-
-   // const validateNames = (first : string, last : string) => {
-   //    if (!first && !last) {
-   //       setNameError(t('name_require'));
-   //    } else if (!validateName(first) || !validateName(last)) {
-   //       setNameError(t('name_error'));
-   //    } else {
-   //       setNameError('');
-   //    }
-   // };
-
-   // const handleEmailChange = (e : any) => {
-   //    const value = e.target.value;
-   //    setEmail(value);
-   //    if (!value) {
-   //       setEmailError(t('mail_require'));
-   //    } else if (!validateEmail(value)) {
-   //       setEmailError(t('mail_error'));
-   //    } else {
-   //       setEmailError('');
-   //    }
-   // };
-
-   // const handleSubmit = (e : any) => {
-   //    e.preventDefault();
-   //    validateNames(firstName, lastName);
-   //    if (!nameError && !emailError) {
-   //       console.log('Form submitted');
-   //    }
-   // };
 
    const { newsList, loading} = useFetchNews();
+
+   const [projects, setProjects] = useState<any[]>([]);
+
+   useEffect(() => {
+   axios.get('/api/projects')
+      .then(res => setProjects(res.data))
+      .catch(err => console.error('Lỗi tải dự án:', err));
+   }, []);
 
   return (
     <Layout>
@@ -331,38 +283,18 @@ const HomePage = () => {
             <Container>
                <div className="card__container">
                   <Row>
-                     <Col lg={4} className="card__article">
-                        <img src={project_1} alt="image" className='card__img' />
-                        <div className="image-title">Nature's Keepers</div>
-                        <div className="card__data">
-                           <h2 className="card__title">Nature's Keepers Project</h2>
-                           <Link to="/payment/project1" className='card__button button button-left'>
+                     {projects.slice(0, 3).map((project, index) => (
+                        <Col lg={4} className="card__article" key={index}>
+                           <img src={project.image_url} alt="image" className='card__img' />
+                           <div className="image-title">{project.title}</div>
+                           <div className="card__data">
+                           <h2 className="card__title">{project.title} Project</h2>
+                           <Link to={`/projects/${project.slug}`} className='card__button button button-left'>
                               {t('donate_now')}
                            </Link>
-                        </div>
-                     </Col>
-
-                     <Col lg={4} className="card__article">
-                        <img src={project_2} alt="image" className='card__img' />
-                        <div className="image-title">Forest's Friends</div>
-                        <div className="card__data">
-                           <h2 className="card__title">Forest's Friends Project</h2>
-                           <Link to="/payment/project2" className='card__button button button-left'>
-                              {t('donate_now')}
-                           </Link>
-                        </div>
-                     </Col>
-
-                     <Col lg={4} className="card__article">
-                        <img src={project_3} alt="image" className='card__img' />
-                        <div className="image-title">EcoProtect Alliance</div>
-                        <div className="card__data">
-                           <h2 className="card__title">EcoProtect Alliance</h2>
-                           <Link to="/payment/project3" className='card__button button button-left'>
-                              {t('donate_now')}
-                           </Link>
-                        </div>
-                     </Col>
+                           </div>
+                        </Col>
+                     ))}
                   </Row>
                </div>
             </Container>
@@ -406,7 +338,7 @@ const HomePage = () => {
                            <FontAwesomeIcon icon={faCheck} />
                         </div>
                         <div className="step-name">{t('complete')}</div>
-                        <div className="step-description">{t('p_des')}</div>
+                        <div className="step-description">{t('c_des')}</div>
                      </div>
                   </Col>
                </Row>

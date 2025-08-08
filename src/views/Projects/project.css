@@ -13,7 +13,7 @@
 /* Hero Section */
 #hero {
     /* height: 80vh; */
-    background-image: url("assets/image/donate_bg.jpg");
+    background-image: url("../../assets/image/donate_bg.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -124,7 +124,7 @@
 
 #main .col-xl-5 .donate-box .form-check-radio .form-check-input:hover,
 #main .col-xl-5 .donate-box .form-check-radio .form-check-input:checked {
-  background-image: url(assets/image/Untitled.png);
+  background-image: url(../../assets/image/Untitled.png);
   background-size: cover;
   cursor: pointer;
 }

@@ -29,6 +29,18 @@ app.get('/', (req, res) => {
   res.send('✅ API đang hoạt động!');
 });
 
+//Chạy server
+const PORT = process.env.PORT || 5001;
+app.listen(PORT, () => {
+  console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
+});
+
+// Import routes
+const animalsRoutes = require('./routes/animals');
+
+// Sử dụng routes
+app.use('/api/animals', animalsRoutes);
+
 //API GET tất cả bài báo
 app.get('/api/news', (req, res) => {
   const query = 'SELECT * FROM news ORDER BY date DESC';
@@ -39,12 +51,6 @@ app.get('/api/news', (req, res) => {
     }
     res.json(results);
   });
-});
-
-//Chạy server
-const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
-  console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
 });
 
 //API Chi tiết bài báo
@@ -147,14 +153,46 @@ app.get('/api/contact/confirm', (req, res) => {
 console.log('🧪 EMAIL_USER:', process.env.EMAIL_USER);
 console.log('🧪 EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? 'Đã có mật khẩu' : '❌ Chưa có');
 
-app.get('/api/animals', (req, res) => {
-  const query = 'SELECT * FROM animals';
+// app.get('/api/animals', (req, res) => {
+//   const query = 'SELECT * FROM animals';
+//   db.query(query, (err, results) => {
+//     if (err) {
+//       console.error('❌ Lỗi truy vấn động vật:', err);
+//       return res.status(500).json({ error: 'Lỗi truy vấn CSDL' });
+//     }
+//     res.json(results);
+//   });
+// });
+
+app.get('/api/projects', (req, res) => {
+  const query = 'SELECT * FROM projects';
   db.query(query, (err, results) => {
     if (err) {
-      console.error('❌ Lỗi truy vấn động vật:', err);
+      console.error('❌ Lỗi truy vấn projects:', err);
       return res.status(500).json({ error: 'Lỗi truy vấn CSDL' });
     }
     res.json(results);
   });
 });
 
+app.get('/api/projects/:slug', (req, res) => {
+  const slug = req.params.slug;
+  const query = 'SELECT * FROM projects WHERE slug = ? LIMIT 1';
+  db.query(query, [slug], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Lỗi truy vấn CSDL' });
+    if (results.length === 0) return res.status(404).json({ error: 'Không tìm thấy dự án' });
+    res.json(results[0]);
+  });
+});
+
+//API GET tất cả rừng
+app.get('/api/forests-map', (req, res) => {
+  const query = 'SELECT * FROM forests';
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('❌ Lỗi truy vấn:', err);
+      return res.status(500).json({ error: 'Lỗi truy vấn CSDL' });
+    }
+    res.json(results);
+  });
+});

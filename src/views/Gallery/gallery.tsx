@@ -5,10 +5,13 @@ import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
 function Gallery() {
+
   const { t } = useTranslation();
   const [animals, setAnimals] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+  const [selectedLevel, setSelectedLevel] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     axios.get('/api/animals')
@@ -16,10 +19,17 @@ function Gallery() {
       .catch(err => console.error('Lỗi tải animals:', err));
   }, []);
 
-  const totalPages = Math.ceil(animals.length / itemsPerPage);
   const handlePageChange = (page: number) => setCurrentPage(page);
 
-  const currentAnimals = animals.slice(
+  const filteredAnimals = animals.filter(animal => {
+    const matchesLevel = selectedLevel ? animal.red_level === selectedLevel : true;
+    const matchesSearch = animal.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesLevel && matchesSearch;
+  });
+
+  const totalPages = Math.ceil(filteredAnimals.length / itemsPerPage);
+
+  const currentAnimals = filteredAnimals.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -31,6 +41,33 @@ function Gallery() {
         <h2 className="gallery-header">
           {t('animals')} <span className="text-success fw-lighter">{t('Gallery')}</span>
         </h2>
+        <div className="search-container">
+          <input
+            type="text"
+            placeholder="Search by animal name..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1); // quay về trang đầu khi search
+            }}
+          />
+        </div>
+
+        <div className="filter-container">
+          <label htmlFor="filter">Filter by Red List Level:</label>
+          <select
+            id="filter"
+            value={selectedLevel}
+            onChange={(e) => setSelectedLevel(e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="EN">Endangered (EN)</option>
+            <option value="VU">Vulnerable (VU)</option>
+            <option value="R">Rare (R)</option>
+            <option value="T">Threatened (T)</option>
+            <option value="NT">Near Threatened (NT)</option>
+          </select>
+        </div>
 
         <div className="gallery pt-2">
           {currentAnimals.map((animal) => (
@@ -40,7 +77,7 @@ function Gallery() {
                 <div className="gallery__overlay">
                   <span>
                     {animal.name}
-                    {animal.red_list ? ` 🔴 (${animal.red_level || t('Endangered')})` : ''}
+                    {animal.red_list ? ` 🔴 (${animal.red_level})` : ''}
                   </span>
                 </div>
               </a>

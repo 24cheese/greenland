@@ -4,7 +4,6 @@ import { Container, Nav, Navbar, Offcanvas } from 'react-bootstrap';
 import logo from '../assets/image/logo.png';
 import flagEn from '../assets/image/en.svg';
 import flagVi from '../assets/image/vi.svg';
-
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 
@@ -60,10 +59,10 @@ const Header = () => {
               </Offcanvas.Header>
               <Offcanvas.Body>
                 <Nav className="justify-content-end flex-grow-1">
-                  <Nav.Link as={NavLink} to="/home">{t('home')}</Nav.Link>
                   <Nav.Link as={NavLink} to="/about-us">{t('about_us')}</Nav.Link>
                   <Nav.Link as={NavLink} to="/reality">{t('reality')}</Nav.Link>
                   <Nav.Link as={NavLink} to="/gallery">{t('gallery')}</Nav.Link>
+                  <Nav.Link as={NavLink} to="/forests-map">Bản đồ</Nav.Link>
                   <Nav.Link as={NavLink} to="/donate">
                     <button className='button button-left'>{t('donate')}</button>
                   </Nav.Link>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchNews } from '../api/newsApi';
-import { NewsItem } from '../types/News';
+import { NewsItem } from '../types/NewsItem';
 
 export const useFetchNews = () => {
   const [newsList, setNewsList] = useState<NewsItem[]>([]);

@@ -17,12 +17,12 @@ function NewsDetail() {
   const { slug } = useParams();
   const [news, setNews] = useState<any>(null);
 
-useEffect(() => {
-  console.log("Slug đang lấy từ URL:", slug);  // thêm dòng này
-  axios.get(`/api/news/${slug}`)
-    .then(res => setNews(res.data))
-    .catch(err => console.error('❌ API lỗi:', err));
-}, [slug]);
+  useEffect(() => {
+    console.log("Slug đang lấy từ URL:", slug);  // thêm dòng này
+    axios.get(`/api/news/${slug}`)
+      .then(res => setNews(res.data))
+      .catch(err => console.error('❌ API lỗi:', err));
+  }, [slug]);
 
 
   if (!news) return <div>Loading...</div>;

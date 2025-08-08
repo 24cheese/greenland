@@ -4,13 +4,9 @@ import { NavLink } from 'react-router-dom';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFacebookF, faInstagram, faTwitter, faLinkedin } from '@fortawesome/free-brands-svg-icons';
-import { faAngleLeft, faAngleRight, faHeart, faCircleCheck, faLock } from '@fortawesome/free-solid-svg-icons'
+import { faAngleLeft, faAngleRight, faHeart, faCircleCheck, faLock } from '@fortawesome/free-solid-svg-icons';
 import Layout from '../../layouts/Layout';
 import './donation.css';
-
-import project_1 from '../../assets/image/project_1.jpg';
-import project_2 from '../../assets/image/project_2.jpg';
-import project_3 from '../../assets/image/project_3.jpg';
 import http from '../../assets/image/http.png';
 
 import Slider from 'react-slick';
@@ -18,6 +14,7 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
 import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 
 const Donation: React.FC = () => {
     const { t } = useTranslation();
@@ -39,52 +36,34 @@ const Donation: React.FC = () => {
         nextArrow: <FontAwesomeIcon icon={faAngleRight} />,
     };
 
+    const [projects, setProjects] = useState<any[]>([]);
+
+    useEffect(() => {
+        axios.get('/api/projects')
+            .then(res => setProjects(res.data))
+            .catch(err => console.error('Lỗi tải dự án:', err));
+    }, []);
+
     return (
         <Layout>
             <div id="project">
                 <Container>
                     <Slider {...settings}>
-                        {[{
-                            img: project_1,
-                            title: "Nature's Keepers",
-                            desc: t('pr1_des'),
-                            progress: 70,
-                            goal: '100,000,000 VND',
-                            link: '/payment/project1'
-                        }, {
-                            img: project_2,
-                            title: "Forest's Friend",
-                            desc: t('pr2_des'),
-                            progress: 100,
-                            goal: '500,000,000 VND',
-                            link: '/payment/project2'
-                        }, {
-                            img: project_3,
-                            title: "EcoProtect Alliance",
-                            desc: t('pr3_des'),
-                            progress: 40,
-                            goal: '700,000,000 VND',
-                            link: '/payment/project3'
-                        }].map((project, index) => (
+                        {projects.map((project, index) => (
                             <div key={index}>
                                 <Row>
-                                    <Col lg={7}><img src={project.img} alt="" /></Col>
+                                    <Col lg={7}><img src={project.image_url} alt="" /></Col>
                                     <Col lg={5}>
                                         <h2>{project.title} <br /> Project</h2>
-                                        <p>{project.desc}</p>
+                                        <p>{project.description}</p>
                                         <ProgressBar now={project.progress} />
                                         <div className="status">
                                             <div className='donated'>{project.progress}% {t('donated')}</div>
                                             <div className='goal'>{t('goal')}: {project.goal}</div>
                                         </div>
                                         <hr />
-                                        <ul className='socials-list'>
-                                            {[faFacebookF, faInstagram, faLinkedin, faTwitter].map((icon, i) => (
-                                                <li key={i}><a href="#" target='_blank'><FontAwesomeIcon className='icon' icon={icon} /></a></li>
-                                            ))}
-                                        </ul>
                                         <div className="button-group">
-                                            <NavLink to={project.link}>
+                                            <NavLink to={`/projects/${project.slug}`}>
                                                 <button className='button button-left'>{t('donate_now')}</button>
                                             </NavLink>
                                             <div className='follow'>
