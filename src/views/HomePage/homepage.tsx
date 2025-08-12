@@ -18,8 +18,9 @@ import project_3 from '../../assets/image/project_3.jpg';
 import Nav from 'react-bootstrap/Nav'
 import { toast } from 'react-toastify';
 
-import { useFetchNews } from '../../hooks/useFetchNews';
 import axios from 'axios';
+import { useFetchNews } from '../../hooks/useFetchNews';
+import { useFetchProject } from '../../hooks/useFetchProject';
 
 const HomePage = () => {
   const { t } = useTranslation();
@@ -174,14 +175,7 @@ const HomePage = () => {
    };
 
    const { newsList, loading} = useFetchNews();
-
-   const [projects, setProjects] = useState<any[]>([]);
-
-   useEffect(() => {
-   axios.get('/api/projects')
-      .then(res => setProjects(res.data))
-      .catch(err => console.error('Lỗi tải dự án:', err));
-   }, []);
+   const { project, loadding} = useFetchProject();
 
   return (
     <Layout>
@@ -283,13 +277,13 @@ const HomePage = () => {
             <Container>
                <div className="card__container">
                   <Row>
-                     {projects.slice(0, 3).map((project, index) => (
+                     {project.slice(0, 3).map((project, index) => (
                         <Col lg={4} className="card__article" key={index}>
                            <img src={project.image_url} alt="image" className='card__img' />
                            <div className="image-title">{project.title}</div>
                            <div className="card__data">
                            <h2 className="card__title">{project.title} Project</h2>
-                           <Link to={`/projects/${project.slug}`} className='card__button button button-left'>
+                           <Link to={`/projects/${project.id}`} className='card__button button button-left'>
                               {t('donate_now')}
                            </Link>
                            </div>
@@ -355,7 +349,7 @@ const HomePage = () => {
                      <div className="inner-box" key={news.id}>
                         <div className="box-header">
                         <div className="main-img">
-                           <NavLink to={`/news/${news.slug}`}>
+                           <NavLink to={`/news/${news.id}`}>
                               <img src={news.thumbnail} alt={news.title} />
                            </NavLink>
                         </div>
@@ -365,9 +359,10 @@ const HomePage = () => {
                         </div>
                         </div>
                         <div className="title">
-                        <NavLink to={`/news/${news.slug}`}>{news.title}</NavLink>
+                        <NavLink to={`/news/${news.id}`}>{news.title}</NavLink>
                         </div>
-                        <div className="description">{news.content.slice(0, 80)}...</div>
+                        <div className="description" dangerouslySetInnerHTML={{ __html: news.content.slice(0, 80)}}
+                        ></div>
                      </div>
                   ))}
                   </Slider>

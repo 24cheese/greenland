@@ -19,11 +19,11 @@ const AppRoutes = () => {
       <Route path="/reality" element={<Reality />} />
       <Route path="/gallery" element={<Gallery />} />
       <Route path="/donate" element={<Donation />} />
-      <Route path="/vnpay_return" element={<VnpayReturn />} />
-      <Route path="/news/:slug" element={<NewsDetail />} />
-      <Route path="/projects/:slug" element={<Project />} />
+      <Route path="/news/:id" element={<NewsDetail />} />
+      <Route path="/projects/:id" element={<Project />} />
       <Route path="/forests-map" element={<ForestsMap />} />
 
+      <Route path="/vnpay_return" element={<VnpayReturn />} />
     </Routes>
   );
 };

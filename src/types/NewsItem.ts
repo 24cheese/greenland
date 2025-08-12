@@ -5,5 +5,4 @@ export interface NewsItem {
   date: string;
   content: string;
   thumbnail: string;
-  slug: string;
 }

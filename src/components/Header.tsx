@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { Container, Nav, Navbar, Offcanvas } from 'react-bootstrap';
 import logo from '../assets/image/logo.png';
@@ -6,6 +6,18 @@ import flagEn from '../assets/image/en.svg';
 import flagVi from '../assets/image/vi.svg';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser } from '@fortawesome/free-solid-svg-icons';
+import Popup from 'reactjs-popup';
+import 'reactjs-popup/dist/index.css';
+import { getUser } from '../utils/authStorage';
+import LoginForm from '../auth/LoginForm';
+import RegisterForm from '../auth/RegisterForm';
+import UserMenu from '../auth/UserMenu';
+interface User {
+  name: string;
+  email: string;
+}
 
 const Header = () => {
   const [isScrolledPast, setIsScrolledPast] = useState(false);
@@ -13,6 +25,14 @@ const Header = () => {
   const [flag, setFlag] = useState(localStorage.getItem('flag') || flagEn);
 
   const { t } = useTranslation();
+
+  const [user, setUser] = useState<any>(null);
+  const [isLogin, setIsLogin] = useState(true);
+
+  useEffect(() => {
+    const savedUser = getUser();
+    if (savedUser) setUser(savedUser);
+  }, []);
 
   // Xử lý đổi ngôn ngữ
   useEffect(() => {
@@ -69,6 +89,24 @@ const Header = () => {
                   <Nav.Link onClick={changeLanguage} style={{ cursor: 'pointer' }}>
                     <img src={flag} alt="flag" width="40" height="30" /> {language.toUpperCase()}
                   </Nav.Link>
+                  <Popup
+                    trigger={
+                      <button className="btn btn-light d-flex align-items-center gap-2">
+                        <FontAwesomeIcon icon={faUser} />
+                        {user && <span>{user.name}</span>}
+                      </button>
+                    }
+                    position="bottom center"
+                    contentStyle={{ zIndex: 9999, padding: '20px', borderRadius: '10px', width: '300px' }}
+                  >
+                    {user ? (
+                      <UserMenu user={user} onLogout={() => setUser(null)} />
+                    ) : (
+                      isLogin
+                        ? <LoginForm switchToRegister={() => setIsLogin(false)} onLoginSuccess={setUser} />
+                        : <RegisterForm switchToLogin={() => setIsLogin(true)} />
+                    )}
+                  </Popup>
                 </Nav>
               </Offcanvas.Body>
             </Navbar.Offcanvas>

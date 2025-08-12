@@ -110,23 +110,22 @@ export default function ManageAnimal() {
           placeholder="Search by animal name..."
           delay={400} // debounce 400ms
         />
-
-              {/* Filter */}
-      <FilterSelect
-        label="Filter by Red List Level:"
-        value={selectedLevel}
-        onChange={(val) => setSelectedLevel(val)}
-        options={[
-          { value: "", label: "All" },
-          { value: "EX", label: "Extinct (EX)" },
-          { value: "EW", label: "Extinct in the Wild (EW)" },
-          { value: "CR", label: "Critically Endangered (CR)" },
-          { value: "EN", label: "Endangered (EN)" },
-          { value: "VU", label: "Vulnerable (VU)" },
-          { value: "NT", label: "Near-threatened (NT)" },
-          { value: "LC", label: "Least concern (LC)" },
-        ]}
-      />
+        {/* Filter */}
+        <FilterSelect
+          label="Filter by Red List Level:"
+          value={selectedLevel}
+          onChange={(val) => setSelectedLevel(val)}
+          options={[
+            { value: "", label: "All" },
+            { value: "EX", label: "Extinct (EX)" },
+            { value: "EW", label: "Extinct in the Wild (EW)" },
+            { value: "CR", label: "Critically Endangered (CR)" },
+            { value: "EN", label: "Endangered (EN)" },
+            { value: "VU", label: "Vulnerable (VU)" },
+            { value: "NT", label: "Near-threatened (NT)" },
+            { value: "LC", label: "Least concern (LC)" },
+          ]}
+        />
         <Button variant="success" className="mb-3" onClick={handleAdd}>
           + Thêm mới
         </Button>

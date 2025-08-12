@@ -23,63 +23,7 @@ interface Props { }
 
 function Project(props: Props) {
     const { } = props;
-
-    const [isScrolledPast, setIsScrolledPast] = useState(false);
-    const navigate = useNavigate();
-
-    // Effect for header
-    useEffect(() => {
-        function handleScroll() {
-            const isPast = window.scrollY > 0;
-            setIsScrolledPast(isPast);
-        }
-
-        window.addEventListener('scroll', handleScroll);
-
-        return () => {
-            window.removeEventListener('scroll', handleScroll);
-        };
-    }, []);
-
-    // Donate Method
-    const [donateMethod, setDonateMethod] = useState('');
-
-    const handleDonateMethodChange = (method: SetStateAction<string>) => {
-        setDonateMethod(method);
-    };
-
-    useEffect(() => {
-        setDonateMethod('online');
-    }, []);
-
-    // Donate
-    const [amount, setAmount] = useState<number>(0);
-    const [locale, setLocale] = useState<string>('en');
-
-    const projectId = '66769038f82351ff111ac31f'
-
-    const handleDonate = async () => {
-        try {
-            const response = await axios.post('http://localhost:5000/api/payment/create_payment_url', {
-                amount,
-                locale,
-                projectId
-            });
-            window.location.href = response.data.redirectUrl;
-        } catch (error) {
-            console.error('Payment error:', error);
-        }
-    };
-
     const [showAlert, setShowAlert] = useState(false);
-
-    const handleDonateNow = () => {
-        setShowAlert(true);
-        setTimeout(() => {
-            // setShowAlert(false); 
-            navigate('/donate'); // Chuyển hướng sau 3 giây
-        }, 2000);
-    };
 
     // Change language
     const [language, setLanguage] = useState<string>(localStorage.getItem('language') || 'en');
@@ -98,17 +42,59 @@ function Project(props: Props) {
     };
     const { t } = useTranslation();
 
-    const { slug } = useParams();
+    const { id } = useParams();
     const [project, setProject] = useState<any>(null);
 
-    // Lấy dữ liệu project theo slug
+    // Lấy dữ liệu project theo id
     useEffect(() => {
-    if (slug) {
-        axios.get(`/api/projects/${slug}`)
+    if (id) {
+        axios.get(`/api/projects/${id}`)
         .then(res => setProject(res.data))
         .catch(err => console.error('Lỗi tải project:', err));
     }
-    }, [slug]);
+    }, [id]);
+
+    // Donate Method
+    const [donateMethod, setDonateMethod] = useState('');
+
+    useEffect(() => {
+        setDonateMethod('online');
+    }, []);
+
+    const handleDonateMethodChange = (method: SetStateAction<string>) => {
+        setDonateMethod(method);
+    };
+
+    const [amount, setAmount] = useState<number>(10000); // số tiền mặc định
+    // Gọi API thanh toán
+    const handleDonate = async () => {
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        if (!user || !user.id || !id) {
+            console.error("Thiếu thông tin user hoặc project");
+            return;
+        }
+
+        try {
+            const url = '/api/payment/create_payment_url';
+
+            const res = await axios.post(url, {
+            name: user.name,
+            email: user.email,
+            amount,
+            projectId: id
+            }, {
+            headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (res.data.paymentUrl) {
+            window.location.href = res.data.paymentUrl;
+            }
+        } catch (err) {
+            console.error("Lỗi khi tạo URL thanh toán:", err);
+        }
+    };
+
+
 
     return (
         <Layout>
@@ -124,7 +110,9 @@ function Project(props: Props) {
                 <Container>
                     <Row>
                         <Col xl={3} className='image'>
-                            <img src={project?.image_url} alt={project?.title} />
+                            {project && project.image_url && (
+                                <img src={project.image_url} alt={project.title} />
+                            )}
                         </Col>
                         <Col xl={4} className='content'>
                             <h6>{t('donatingto')}:</h6>
@@ -153,9 +141,8 @@ function Project(props: Props) {
                                     <input
                                         className='amount'
                                         type="number"
-                                        placeholder='Amount (VND)'
                                         value={amount}
-                                        onChange={(e) => setAmount(parseInt(e.target.value))} />
+                                        onChange={(e) => setAmount(Number(e.target.value))}/>
                                 </div>
                                 <Row>
                                     <Col md={6}>
@@ -197,7 +184,7 @@ function Project(props: Props) {
                                         <div className='title'>{t('method')}</div>
                                         <div className='main-content'>{t('donate_des')}</div>
                                         <br />
-                                        <button className='button button-left' onClick={handleDonateNow}>{t('donate_now')}</button>
+                                        <button className='button button-left'>{t('donate_now')}</button>
                                     </div>
                                 )}
                                 {donateMethod === 'online' && (

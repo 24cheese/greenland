@@ -15,7 +15,7 @@
     "items": [
       {
         "label": "Email gửi về",
-        "href": "/admin/contact",
+        "href": "/admin/manage-contacts",
         "icon": "inbox"
       }
     ]
@@ -25,22 +25,22 @@
     "items": [
       {
         "label": "Động vật",
-        "href": "/admin/manage-animal",
+        "href": "/admin/manage-animals",
         "icon": "paw"
       },
       {
         "label": "Rừng",
-        "href": "/admin/register",
+        "href": "/admin/manage-forests",
         "icon": "forest"
       },
       {
         "label": "Bài báo",
-        "href": "/admin/register",
+        "href": "/admin/manage-news",
         "icon": "news"
       },
       {
         "label": "Dự án",
-        "href": "/admin/register",
+        "href": "/admin/manage-projects",
         "icon": "project"
       },
       {

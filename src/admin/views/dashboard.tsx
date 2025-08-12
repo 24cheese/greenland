@@ -1,7 +1,7 @@
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { faUser, faUserCheck, faShoppingCart, faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import AdminLayout from './layouts/AdminLayout';
+import AdminLayout from '../../layouts/AdminLayout';
 
 
 const AdminDashboard = () => {

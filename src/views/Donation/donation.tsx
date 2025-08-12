@@ -63,7 +63,7 @@ const Donation: React.FC = () => {
                                         </div>
                                         <hr />
                                         <div className="button-group">
-                                            <NavLink to={`/projects/${project.slug}`}>
+                                            <NavLink to={`/projects/${project.id}`}>
                                                 <button className='button button-left'>{t('donate_now')}</button>
                                             </NavLink>
                                             <div className='follow'>

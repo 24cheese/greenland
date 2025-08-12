@@ -22,7 +22,9 @@ const ForestsMap = () => {
     name: string;
     lat: number;
     lng: number;
+    square: number;
     description: string;
+    info: string;
     image_url: string;
   }
 
@@ -140,7 +142,8 @@ const ForestsMap = () => {
               marginBottom: '15px'
             }}
           />
-          <p>{selectedForest.description}</p>
+          <p><strong>{selectedForest.description}</strong></p>
+          <div dangerouslySetInnerHTML={{ __html: selectedForest.info }} />
           <Button variant="secondary" onClick={handleCloseModal}>
             Đóng
           </Button>

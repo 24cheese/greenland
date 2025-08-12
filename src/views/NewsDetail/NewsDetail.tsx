@@ -14,15 +14,15 @@ import moment from 'moment';
 import 'moment/locale/vi'
 
 function NewsDetail() {
-  const { slug } = useParams();
+  const { id } = useParams();
   const [news, setNews] = useState<any>(null);
 
   useEffect(() => {
-    console.log("Slug đang lấy từ URL:", slug);  // thêm dòng này
-    axios.get(`/api/news/${slug}`)
+    console.log("Slug đang lấy từ URL:", id);  // thêm dòng này
+    axios.get(`/api/news/${id}`)
       .then(res => setNews(res.data))
       .catch(err => console.error('❌ API lỗi:', err));
-  }, [slug]);
+  }, [id]);
 
 
   if (!news) return <div>Loading...</div>;
@@ -46,7 +46,7 @@ function NewsDetail() {
           </div>
           <div className="inner_main_content">
             {news.thumbnail && <img src={news.thumbnail} alt={news.title} />}
-            <p>{news.content}</p>
+            <div className="description" dangerouslySetInnerHTML={{ __html: news.content}}></div>
             <p className='share'>Share this article</p>
             <ul className='socials-list'>
               <li><a href="#"><FontAwesomeIcon className='icon' icon={faFacebookF} /></a></li>
