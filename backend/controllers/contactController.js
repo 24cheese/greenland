@@ -1,82 +1,88 @@
-require('dotenv').config()
-const db = require('../db')
-const nodemailer = require('nodemailer')
+require('dotenv').config();
+const dbPool = require('../db');
+const nodemailer = require('nodemailer');
 
-// API POST gửi yêu cầu xác nhận liên hệ (gửi email xác nhận)
-exports.sendContactVerification = (req, res) => {
+// Cấu hình một lần để tái sử dụng
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD, // Nên dùng App Password của Google
+  },
+});
+
+// Gửi email yêu cầu xác nhận
+exports.sendContactVerification = async (req, res) => {
   const { firstName, lastName, email, message } = req.body;
 
   if (!firstName || !lastName || !email || !message) {
     return res.status(400).json({ error: 'Vui lòng điền đầy đủ thông tin' });
   }
 
-  const tokenData = { firstName, lastName, email, message };
-  const token = Buffer.from(JSON.stringify(tokenData)).toString('base64');
-  const confirmLink = `http://localhost:${process.env.PORT || 5001}/api/contact/confirm?token=${token}`;
+  try {
+    const tokenData = { firstName, lastName, email, message };
+    const token = Buffer.from(JSON.stringify(tokenData)).toString('base64');
 
-  // Cấu hình gửi email
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD, // App Password
-    },
-  });
+    // Sửa lỗi nghiêm trọng: Lấy URL backend từ biến môi trường
+    const backendUrl = process.env.BACKEND_URL || `http://localhost:5001`;
+    const confirmLink = `${backendUrl}/api/contact/confirm?token=${token}`;
 
-  const mailOptions = {
-    from: `"GreenLand" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: 'Xác nhận liên hệ GreenLand',
-    html: `
-      <p>Xin chào ${firstName} ${lastName},</p>
-      <p>Bạn đã gửi yêu cầu liên hệ với GreenLand. Vui lòng xác nhận bằng cách bấm vào liên kết sau:</p>
-      <a href="${confirmLink}">Xác nhận liên hệ</a>
-      <p>Nếu bạn không thực hiện hành động này, vui lòng bỏ qua email.</p>
-    `,
-  };
+    const mailOptions = {
+      from: `"GreenLand" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Xác nhận yêu cầu liên hệ từ GreenLand',
+      html: `
+        <p>Xin chào ${firstName} ${lastName},</p>
+        <p>Cảm ơn bạn đã liên hệ với GreenLand. Vui lòng xác nhận bằng cách bấm vào liên kết sau:</p>
+        <p><a href="${confirmLink}" style="color: green; font-weight: bold;">Xác nhận liên hệ</a></p>
+        <p>Nếu bạn không thực hiện hành động này, vui lòng bỏ qua email.</p>
+      `,
+    };
 
-  transporter.sendMail(mailOptions, (error) => {
-    if (error) {
-      console.error('❌ Lỗi gửi email:', error);
-      return res.status(500).json({ error: 'Gửi email thất bại' });
-    }
-    res.json({ message: 'Đã gửi email xác nhận' });
-  });
+    await transporter.sendMail(mailOptions);
+    res.json({ message: 'Email xác nhận đã được gửi. Vui lòng kiểm tra hộp thư của bạn.' });
+
+  } catch (error) {
+    console.error('❌ Lỗi gửi email:', error);
+    res.status(500).json({ error: 'Gửi email thất bại' });
+  }
 };
 
-// API xác nhận liên hệ (lưu vào DB)
-exports.confirmContact = (req, res) => {
-  const token = req.query.token;
+// Xác nhận và lưu liên hệ vào DB
+exports.confirmContact = async (req, res) => {
+  const { token } = req.query;
   if (!token) return res.status(400).send('Thiếu token xác nhận');
 
   try {
     const json = Buffer.from(token, 'base64').toString('utf-8');
-    const data = JSON.parse(json);
-    const { firstName, lastName, email, message } = data;
+    const { firstName, lastName, email, message } = JSON.parse(json);
 
-    const query = 'INSERT INTO contacts (first_name, last_name, email, message) VALUES (?, ?, ?, ?)';
-    db.query(query, [firstName, lastName, email, message], (err) => {
-      if (err) {
-        console.error('❌ Lỗi khi lưu contact:', err);
-        return res.status(500).send('Lỗi khi lưu thông tin liên hệ');
-      }
-      res.send(`<h2 style="color:green">✅ Xác nhận thành công!</h2><p>Chúng tôi đã nhận được thông tin của bạn.</p>`);
-    });
+    const query = 'INSERT INTO `contacts` (first_name, last_name, email, message) VALUES (?, ?, ?, ?)';
+    await dbPool.query(query, [firstName, lastName, email, message]);
+
+    res.send(`<div style="font-family: Arial, sans-serif; text-align: center; padding-top: 50px;">
+                <h2 style="color: #28a745;">✅ Xác nhận thành công!</h2>
+                <p>Cảm ơn bạn. Chúng tôi đã nhận được thông tin và sẽ phản hồi sớm nhất có thể.</p>
+             </div>`);
+
   } catch (err) {
-    console.error('❌ Token không hợp lệ:', err);
-    return res.status(400).send('❌ Token không hợp lệ');
+    console.error('❌ Lỗi token hoặc CSDL:', err);
+    return res.status(400).send('❌ Token không hợp lệ hoặc đã có lỗi xảy ra.');
   }
 };
 
-// Lấy tất cả liene heej
-exports.getAllContacts = (req, res) => {
-  db.query('SELECT * FROM contacts', (err, results) => {
-    if (err) return res.status(500).json({ error: 'Lỗi truy vấn CSDL' });
-    res.json(results);
-  });
+// Lấy tất cả liên hệ
+exports.getAllContacts = async (req, res) => {
+  try {
+    const [rows] = await dbPool.query('SELECT * FROM `contacts`');
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching contacts:', error);
+    res.status(500).json({ error: 'Lỗi máy chủ nội bộ' });
+  }
 };
 
-// Gửi email phản hồi
+// Gửi email phản hồi (hàm này đã dùng async/await sẵn, giữ lại và tối ưu)
 exports.sendEmail = async (req, res) => {
   const { to, subject, content } = req.body;
 
@@ -85,31 +91,18 @@ exports.sendEmail = async (req, res) => {
   }
 
   try {
-    // Cấu hình transporter (thay đổi theo mail bạn dùng)
-    let transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true, // SSL
-      auth: {
-        user: process.env.EMAIL_USER, // email gửi đi
-        pass: process.env.EMAIL_PASSWORD, // mật khẩu hoặc app password
-      },
-    });
-
-    // Tạo mail options
-    let mailOptions = {
-      from: `"Support" <${process.env.EMAIL_USER}>`,
+    const mailOptions = {
+      from: `"GreenLand Support" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       html: content,
     };
 
-    // Gửi mail
     await transporter.sendMail(mailOptions);
+    res.json({ message: "Email đã được gửi thành công" });
 
-    res.json({ message: "Email đã được gửi" });
   } catch (error) {
-    console.error(error);
+    console.error('Error sending reply email:', error);
     res.status(500).json({ message: "Lỗi khi gửi email" });
   }
 };
