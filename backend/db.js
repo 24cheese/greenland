@@ -1,28 +1,20 @@
-const mysql = require('mysql2/promise'); // Thêm /promise
+const mysql = require('mysql2/promise'); // Vẫn dùng /promise
 require('dotenv').config();
 
-const connectionString = process.env.DATABASE_URL;
-let db;
+// Tạo một "pool" kết nối thay vì một kết nối đơn lẻ.
+// Pool sẽ tự quản lý việc tạo và tái sử dụng các kết nối.
+const pool = mysql.createPool(process.env.DATABASE_URL);
 
-async function connectToDatabase() {
-  if (db) return db; // Trả về kết nối nếu đã có
+// Kiểm tra kết nối khi ứng dụng khởi động
+pool.getConnection()
+    .then(connection => {
+        console.log('✅ Database pool connected successfully!');
+        connection.release(); // Trả kết nối về lại cho pool
+    })
+    .catch(error => {
+        console.error('❌ DATABASE CONNECTION FAILED:', error);
+        process.exit(1);
+    });
 
-  if (!connectionString) {
-    console.error('CRITICAL ERROR: Biến môi trường DATABASE_URL không được thiết lập.');
-    process.exit(1);
-  }
-
-  try {
-    console.log('🟡 Đang kết nối tới MySQL...');
-    db = await mysql.createConnection(connectionString);
-    console.log('✅ Kết nối MySQL thành công!');
-    return db;
-  } catch (error) {
-    console.error('❌ LỖI KẾT NỐI DATABASE:');
-    console.error(error); // In ra toàn bộ lỗi chi tiết
-    process.exit(1); // Dừng ứng dụng nếu không kết nối được
-  }
-}
-
-// Export hàm để các file khác có thể gọi
-module.exports = connectToDatabase;
+// Export cái pool này ra để các file khác sử dụng
+module.exports = pool;
