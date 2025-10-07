@@ -14,7 +14,17 @@ function Gallery() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    axios.get('/api/animals')
+    // Lấy địa chỉ API từ biến môi trường
+    const apiUrl = process.env.REACT_APP_API_URL;
+
+    // Kiểm tra để đảm bảo biến môi trường tồn tại
+    if (!apiUrl) {
+      console.error("Lỗi: REACT_APP_API_URL chưa được cấu hình!");
+      return;
+    }
+
+    // Thực hiện lời gọi API đến địa chỉ đầy đủ của backend
+    axios.get(`${apiUrl}/api/animals`)
       .then(res => setAnimals(res.data))
       .catch(err => console.error('Lỗi tải animals:', err));
   }, []);
