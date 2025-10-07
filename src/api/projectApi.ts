@@ -1,7 +1,7 @@
-import axios from 'axios';
-import { Project } from '../types/Project';
+import apiClient from "./apiClient";
+import { Project } from "../types/Project";
+import { AxiosResponse } from "axios";
 
-export const fetchProject = async (): Promise<Project[]> => {
-  const res = await axios.get('http://localhost:5001/api/projects');
-  return res.data;
-};
+export const fetchAllProjects = (): Promise<AxiosResponse<Project[]>> => {
+  return apiClient.get('/api/projects');
+}

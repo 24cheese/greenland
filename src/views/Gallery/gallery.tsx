@@ -1,84 +1,59 @@
 import './gallery.css';
-import React, { useEffect, useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Layout from '../../layouts/Layout';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import { useFetchData } from '../../hooks/useFetchData'; // Import hook chung
+import { fetchAllAnimals } from '../../api/animalApi';   // Import hàm API
+import { Animal } from '../../types/animal';           // Import kiểu dữ liệu
 
 function Gallery() {
-
   const { t } = useTranslation();
-  const [animals, setAnimals] = useState<any[]>([]);
+
+  // Bước 1: Gọi hook chung để lấy dữ liệu, trạng thái loading và lỗi
+  const { data: animals, loading, error } = useFetchData<Animal>(fetchAllAnimals);
+
+  // Các state cho việc filter và pagination vẫn giữ lại ở component
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
   const [selectedLevel, setSelectedLevel] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    // Lấy địa chỉ API từ biến môi trường
-    const apiUrl = process.env.REACT_APP_API_URL;
+  // Bước 2: Tối ưu hóa việc filter bằng useMemo
+  // Logic filter chỉ chạy lại khi danh sách animals, selectedLevel hoặc searchTerm thay đổi
+  const filteredAnimals = useMemo(() => {
+    return animals.filter(animal => {
+      const matchesLevel = selectedLevel ? animal.red_level === selectedLevel : true;
+      const matchesSearch = animal.name.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesLevel && matchesSearch;
+    });
+  }, [animals, selectedLevel, searchTerm]);
 
-    // Kiểm tra để đảm bảo biến môi trường tồn tại
-    if (!apiUrl) {
-      console.error("Lỗi: REACT_APP_API_URL chưa được cấu hình!");
-      return;
-    }
-
-    // Thực hiện lời gọi API đến địa chỉ đầy đủ của backend
-    axios.get(`${apiUrl}/api/animals`)
-      .then(res => setAnimals(res.data))
-      .catch(err => console.error('Lỗi tải animals:', err));
-  }, []);
 
   const handlePageChange = (page: number) => setCurrentPage(page);
 
-  const filteredAnimals = animals.filter(animal => {
-    const matchesLevel = selectedLevel ? animal.red_level === selectedLevel : true;
-    const matchesSearch = animal.name.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesLevel && matchesSearch;
-  });
-
+  // Tính toán phân trang dựa trên dữ liệu đã filter
   const totalPages = Math.ceil(filteredAnimals.length / itemsPerPage);
-
   const currentAnimals = filteredAnimals.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  return (
-    <Layout>
-      <section className="animals-gallery">
-        <hr className="threats-line" />
-        <h2 className="gallery-header">
-          {t('animals')} <span className="text-success fw-lighter">{t('Gallery')}</span>
-        </h2>
-        <div className="search-container">
-          <input
-            type="text"
-            placeholder="Search by animal name..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1); // quay về trang đầu khi search
-            }}
-          />
-        </div>
+  // Bước 3: Xử lý các trạng thái giao diện (UI states)
+  const renderContent = () => {
+    if (loading) {
+      return <p className="loading-message">Đang tải thư viện...</p>;
+    }
 
-        <div className="filter-container">
-          <label htmlFor="filter">Filter by Red List Level:</label>
-          <select
-            id="filter"
-            value={selectedLevel}
-            onChange={(e) => setSelectedLevel(e.target.value)}
-          >
-            <option value="">All</option>
-            <option value="EN">Endangered (EN)</option>
-            <option value="VU">Vulnerable (VU)</option>
-            <option value="R">Rare (R)</option>
-            <option value="T">Threatened (T)</option>
-            <option value="NT">Near Threatened (NT)</option>
-          </select>
-        </div>
+    if (error) {
+      return <p className="error-message">Không thể tải dữ liệu. Vui lòng thử lại sau.</p>;
+    }
 
+    if (currentAnimals.length === 0) {
+      return <p className="no-results-message">Không tìm thấy kết quả nào.</p>;
+    }
+
+    return (
+      <>
         <div className="gallery pt-2">
           {currentAnimals.map((animal) => (
             <div className="gallery__item gallery__item--1" key={animal.id}>
@@ -96,7 +71,7 @@ function Gallery() {
         </div>
 
         <div className="pagination">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+          {totalPages > 1 && Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
             <button
               key={page}
               className={`page-button ${page === currentPage ? 'active' : ''}`}
@@ -106,6 +81,52 @@ function Gallery() {
             </button>
           ))}
         </div>
+      </>
+    );
+  };
+
+
+  return (
+    <Layout>
+      <section className="animals-gallery">
+        <hr className="threats-line" />
+        <h2 className="gallery-header">
+          {t('animals')} <span className="text-success fw-lighter">{t('Gallery')}</span>
+        </h2>
+        
+        <div className="search-container">
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo tên động vật..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1); // Quay về trang đầu khi search
+            }}
+          />
+        </div>
+
+        <div className="filter-container">
+          <label htmlFor="filter">Lọc theo mức độ:</label>
+          <select
+            id="filter"
+            value={selectedLevel}
+            onChange={(e) => {
+              setSelectedLevel(e.target.value);
+              setCurrentPage(1); // Quay về trang đầu khi filter
+            }}
+          >
+            <option value="">Tất cả</option>
+            <option value="EN">Nguy cấp (EN)</option>
+            <option value="VU">Sắp nguy cấp (VU)</option>
+            <option value="R">Hiếm (R)</option>
+            <option value="T">Bị đe dọa (T)</option>
+            <option value="NT">Sắp bị đe dọa (NT)</option>
+          </select>
+        </div>
+
+        {renderContent()}
+
       </section>
     </Layout>
   );

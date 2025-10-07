@@ -12,31 +12,32 @@ import { Link, NavLink } from 'react-router-dom';
 import Slider from 'react-slick';
 
 import about_1 from '../../assets/image/about-1.jpg';
-import project_1 from '../../assets/image/project_1.jpg';
-import project_2 from '../../assets/image/project_2.jpg';
-import project_3 from '../../assets/image/project_3.jpg';
-import Nav from 'react-bootstrap/Nav'
+
 import { toast } from 'react-toastify';
 
-import axios from 'axios';
-import { useFetchNews } from '../../hooks/useFetchNews';
-import { useFetchProject } from '../../hooks/useFetchProject';
+// 1. Import hook chung và các hàm API cần thiết
+import { useFetchData } from '../../hooks/useFetchData';
+import { fetchAllNews } from '../../api/newsApi';
+import { fetchAllProjects } from '../../api/projectApi';
+import { News } from '../../types/news';
+import { Project } from '../../types/Project';
+import apiClient from '../../api/apiClient'; // Import apiClient để gửi form
 
 const HomePage = () => {
-  const { t } = useTranslation();
-  //Effect for hero section
-  useEffect(() => {
-    document.documentElement.style.setProperty('--cursor-size', '42px');
-    const handleMove = (e: MouseEvent) => {
-      document.documentElement.style.setProperty('--cursor-x', `${e.clientX}px`);
-      document.documentElement.style.setProperty('--cursor-y', `${e.clientY}px`);
-    };
-    window.addEventListener('mousemove', handleMove);
-    return () => window.removeEventListener('mousemove', handleMove);
-  }, []);
+   const { t } = useTranslation();
+   //Effect for hero section
+   useEffect(() => {
+      document.documentElement.style.setProperty('--cursor-size', '42px');
+      const handleMove = (e: MouseEvent) => {
+         document.documentElement.style.setProperty('--cursor-x', `${e.clientX}px`);
+         document.documentElement.style.setProperty('--cursor-y', `${e.clientY}px`);
+      };
+      window.addEventListener('mousemove', handleMove);
+      return () => window.removeEventListener('mousemove', handleMove);
+   }, []);
 
-  const onMouseEnter = () => document.documentElement.style.setProperty('--cursor-size', '300px');
-  const onMouseLeave = () => document.documentElement.style.setProperty('--cursor-size', '16px');
+   const onMouseEnter = () => document.documentElement.style.setProperty('--cursor-size', '300px');
+   const onMouseLeave = () => document.documentElement.style.setProperty('--cursor-size', '16px');
 
    // React Slick
    var settings = {
@@ -155,30 +156,32 @@ const HomePage = () => {
       }
 
       try {
-         const res = await axios.post('/api/contact/verify', {
+         // 3. Sửa lỗi: Dùng apiClient để đảm bảo gọi đúng URL backend
+         await apiClient.post('/api/contact/verify', {
             firstName,
             lastName,
             email,
             message,
          });
          toast.success('Vui lòng kiểm tra email để xác nhận liên hệ!');
-         
-         // Reset form nếu muốn
+
+         // Reset form
          setFirstName('');
          setLastName('');
          setEmail('');
-         (document.getElementById("message") as HTMLTextAreaElement).value = '';
+         setMessage(''); // Sửa lại để reset state của message
       } catch (error) {
          console.error(error);
          toast.error('Gửi email xác nhận thất bại. Vui lòng thử lại!');
       }
    };
 
-   const { newsList, loading} = useFetchNews();
-   const { project, loadding} = useFetchProject();
+   //2. Sử dụng hook chung để lấy dữ liệu cho News và Projects
+   const { data: newsList, loading: newsLoading, error: newsError } = useFetchData<News>(fetchAllNews);
+   const { data: projects, loading: projectsLoading, error: projectsError } = useFetchData<Project>(fetchAllProjects);
 
-  return (
-    <Layout>
+   return (
+      <Layout>
          {/* Hero Section */}
          <div className="hero-section">
             <div className="layer layer-01">
@@ -277,15 +280,18 @@ const HomePage = () => {
             <Container>
                <div className="card__container">
                   <Row>
-                     {project.slice(0, 3).map((project, index) => (
-                        <Col lg={4} className="card__article" key={index}>
+                     {/* 4. Xử lý trạng thái loading/error cho Projects */}
+                     {projectsLoading && <p>Đang tải dự án...</p>}
+                     {projectsError && <p>Lỗi tải dự án.</p>}
+                     {projects.slice(0, 3).map((project) => (
+                        <Col lg={4} className="card__article" key={project.id}>
                            <img src={project.image_url} alt="image" className='card__img' />
                            <div className="image-title">{project.title}</div>
                            <div className="card__data">
-                           <h2 className="card__title">{project.title} Project</h2>
-                           <Link to={`/projects/${project.id}`} className='card__button button button-left'>
-                              {t('donate_now')}
-                           </Link>
+                              <h2 className="card__title">{project.title} Project</h2>
+                              <Link to={`/projects/${project.id}`} className='card__button button button-left'>
+                                 {t('donate_now')}
+                              </Link>
                            </div>
                         </Col>
                      ))}
@@ -344,28 +350,33 @@ const HomePage = () => {
             <Container>
                <h2>{t('latest_new')}</h2>
                <div>
-                  <Slider {...settings}>
-                  {newsList.map(news => (
-                     <div className="inner-box" key={news.id}>
-                        <div className="box-header">
-                        <div className="main-img">
-                           <NavLink to={`/news/${news.id}`}>
-                              <img src={news.thumbnail} alt={news.title} />
-                           </NavLink>
-                        </div>
-                        <div className="date-box">
-                           <p>{new Date(news.date).getDate()}</p>
-                           <span>{new Date(news.date).toLocaleString('default', { month: 'short' })}</span>
-                        </div>
-                        </div>
-                        <div className="title">
-                        <NavLink to={`/news/${news.id}`}>{news.title}</NavLink>
-                        </div>
-                        <div className="description" dangerouslySetInnerHTML={{ __html: news.content.slice(0, 80)}}
-                        ></div>
-                     </div>
-                  ))}
-                  </Slider>
+                  {/* 5. Xử lý trạng thái loading/error cho News */}
+                  {newsLoading && <p>Đang tải tin tức...</p>}
+                  {newsError && <p>Lỗi tải tin tức.</p>}
+                  {newsList.length > 0 && (
+                     <Slider {...settings}>
+                        {newsList.map(news => (
+                           <div className="inner-box" key={news.id}>
+                              <div className="box-header">
+                                 <div className="main-img">
+                                    <NavLink to={`/news/${news.id}`}>
+                                       <img src={news.thumbnail} alt={news.title} />
+                                    </NavLink>
+                                 </div>
+                                 <div className="date-box">
+                                    <p>{new Date(news.date).getDate()}</p>
+                                    <span>{new Date(news.date).toLocaleString('default', { month: 'short' })}</span>
+                                 </div>
+                              </div>
+                              <div className="title">
+                                 <NavLink to={`/news/${news.id}`}>{news.title}</NavLink>
+                              </div>
+                              <div className="description" dangerouslySetInnerHTML={{ __html: news.content.slice(0, 80) + '...' }}>
+                              </div>
+                           </div>
+                        ))}
+                     </Slider>
+                  )}
                </div>
             </Container>
          </div>
@@ -453,8 +464,8 @@ const HomePage = () => {
             </Container>
          </div>
          {/* End contact */}
-    </Layout>
-  );
+      </Layout>
+   );
 };
 
 export default HomePage;

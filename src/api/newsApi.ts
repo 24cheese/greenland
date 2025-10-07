@@ -1,7 +1,7 @@
-import axios from 'axios';
-import { NewsItem } from '../types/NewsItem';
+import apiClient from './apiClient';
+import { News } from '../types/news';
+import { AxiosResponse } from 'axios';
 
-export const fetchNews = async (): Promise<NewsItem[]> => {
-  const res = await axios.get('http://localhost:5001/api/news');
-  return res.data;
+export const fetchAllNews = (): Promise<AxiosResponse<News[]>> => {
+  return apiClient.get('/api/news');
 };
