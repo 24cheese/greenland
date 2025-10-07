@@ -13,6 +13,9 @@ body {
     min-width: 320px;
     background-image: url(../../assets/image/body_bg.jpg);
 }
+body[data-site-nav-hide-search='false'] [data-home-search-form] .site-nav-search [data-nav-autocomplete-panel-container] .aa-Panel {
+    display: none
+}
 
 ul {
     list-style-type: none;

@@ -35,8 +35,8 @@ const HomePage = () => {
     return () => window.removeEventListener('mousemove', handleMove);
   }, []);
 
-  const onMouseEnter = () => document.documentElement.style.setProperty('--cursor-size', '400px');
-  const onMouseLeave = () => document.documentElement.style.setProperty('--cursor-size', '42px');
+  const onMouseEnter = () => document.documentElement.style.setProperty('--cursor-size', '300px');
+  const onMouseLeave = () => document.documentElement.style.setProperty('--cursor-size', '16px');
 
    // React Slick
    var settings = {

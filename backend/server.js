@@ -5,7 +5,6 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true })); // Nếu gửi form-data
-
 //API test
 app.get('/', (req, res) => {
   res.send('API đang hoạt động!')
