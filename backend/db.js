@@ -1,31 +1,28 @@
+const mysql = require('mysql2/promise'); // Thêm /promise
 require('dotenv').config();
-const mysql = require('mysql2');
 
-// const db = mysql.createConnection({
-//   host: process.env.DB_HOST,
-//   user: process.env.DB_USER,
-//   password: process.env.DB_PASSWORD,
-//   database: process.env.DB_NAME,
-// });
-
-// Lấy chuỗi kết nối trực tiếp từ biến môi trường của Railway
 const connectionString = process.env.DATABASE_URL;
+let db;
 
-// Kiểm tra xem biến môi trường có tồn tại không để tránh lỗi
-if (!connectionString) {
-  console.error('Lỗi: Biến môi trường DATABASE_URL chưa được thiết lập.');
-  process.exit(1); // Thoát ứng dụng nếu không có chuỗi kết nối
+async function connectToDatabase() {
+  if (db) return db; // Trả về kết nối nếu đã có
+
+  if (!connectionString) {
+    console.error('CRITICAL ERROR: Biến môi trường DATABASE_URL không được thiết lập.');
+    process.exit(1);
+  }
+
+  try {
+    console.log('🟡 Đang kết nối tới MySQL...');
+    db = await mysql.createConnection(connectionString);
+    console.log('✅ Kết nối MySQL thành công!');
+    return db;
+  } catch (error) {
+    console.error('❌ LỖI KẾT NỐI DATABASE:');
+    console.error(error); // In ra toàn bộ lỗi chi tiết
+    process.exit(1); // Dừng ứng dụng nếu không kết nối được
+  }
 }
 
-// Thư viện mysql2 có thể nhận trực tiếp chuỗi kết nối này
-const db = mysql.createConnection(connectionString);
-
-db.connect((err) => {
-  if (err) {
-    console.error('Lỗi kết nối MySQL:', err);
-  } else {
-    console.log('Kết nối MySQL thành công!');
-  }
-});
-
-module.exports = db;
+// Export hàm để các file khác có thể gọi
+module.exports = connectToDatabase;

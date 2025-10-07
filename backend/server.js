@@ -2,7 +2,7 @@ require('dotenv').config();
 require('./db.js');
 const express = require('express')
 const cors = require('cors')
-
+const connectToDatabase = require('./db.js');
 const app = express()
 // --- BẮT ĐẦU PHẦN CẤU HÌNH CORS MỚI ---
 
@@ -36,9 +36,19 @@ app.get('/', (req, res) => {
 
 //Chạy server
 const PORT = process.env.PORT || 5001
-app.listen(PORT, () => {
-  console.log(`🚀 Server đang chạy tại ${PORT}`)
-});
+// Hàm để khởi động server
+async function startServer() {
+  // Đợi kết nối database thành công
+  await connectToDatabase();
+
+  // Sau khi có kết nối DB, mới bắt đầu lắng nghe request
+  app.listen(PORT, () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
+  });
+}
+
+// Gọi hàm để bắt đầu toàn bộ quá trình
+startServer();
 
 // Import routes
 const animalsRoutes = require('./routes/animals')
