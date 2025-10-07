@@ -5,7 +5,7 @@ import { ToastContainer } from 'react-toastify';
 import AppRoutes from './routes/AppRoutes';
 import AdminRoutes from './routes/AdminRoutes'
 import reportWebVitals from './reportWebVitals';
-
+import { Analytics } from "@vercel/analytics/react"
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'leaflet/dist/leaflet.css';
@@ -43,6 +43,7 @@ root.render(
       pauseOnHover
       draggable
     />
+    <Analytics/>
   </React.StrictMode>
 );
 
