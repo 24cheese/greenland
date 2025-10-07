@@ -1,4 +1,5 @@
-require('dotenv').config(); // Đảm bảo đã gọi config của dotenv
+require('dotenv').config();
+require('./db.js');
 const express = require('express')
 const cors = require('cors')
 
