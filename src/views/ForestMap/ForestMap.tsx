@@ -2,117 +2,114 @@ import React, { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import axios from 'axios';
 import { Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import './ForestMap.css'
+import './ForestMap.css';
 
+import { useFetchData } from '../../hooks/useFetchData';
+import { fetchAllForests } from '../../api/forestApi';
+import { Forest } from '../../types/forest';
+
+// --- CÁC COMPONENT CON ĐƯỢC TÁCH RA ---
+
+// Component nút quay lại
+const BackButton = () => {
+  const navigate = useNavigate();
+  return (
+    <button onClick={() => navigate(-1)} className="back-button">
+      ← Quay lại
+    </button>
+  );
+};
+
+// Component hiển thị panel chi tiết
+const DetailPanel = ({ forest, onClose }: { forest: Forest; onClose: () => void }) => (
+  <div className="detail-panel show">
+    <h3>{forest.name}</h3>
+    <img src={forest.image_url} alt={forest.name} className="detail-panel-image" />
+    <p><strong>{forest.description}</strong></p>
+    <div dangerouslySetInnerHTML={{ __html: forest.info }} />
+    <Button variant="secondary" onClick={onClose}>
+      Đóng
+    </Button>
+  </div>
+);
+
+// Component để quản lý các hiệu ứng trên bản đồ
+const MapEffects = ({ forest }: { forest: Forest | null }) => {
+  const map = useMap();
+  useEffect(() => {
+    // Luôn resize map sau một khoảng trễ ngắn để đảm bảo layout đúng
+    setTimeout(() => map.invalidateSize(), 300);
+    // Nếu có một khu rừng được chọn, bay đến vị trí đó
+    if (forest) {
+      map.flyTo([forest.lat, forest.lng], 13, { duration: 1.5 });
+    }
+  }, [forest, map]); // Thêm 'map' vào dependency array
+  return null;
+};
+
+
+// --- COMPONENT CHÍNH ---
 
 const ForestsMap = () => {
-  // Fix icon marker mặc định
-  delete (L.Icon.Default.prototype as any)._getIconUrl;
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-    iconUrl: require('leaflet/dist/images/marker-icon.png'),
-    shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-  });
+  // Fix lỗi icon marker mặc định của Leaflet
+  useEffect(() => {
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+      iconUrl: require('leaflet/dist/images/marker-icon.png'),
+      shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+    });
+  }, []);
 
-  interface Forest {
-    id: number;
-    name: string;
-    lat: number;
-    lng: number;
-    square: number;
-    description: string;
-    info: string;
-    image_url: string;
-  }
-
-  const [forests, setForests] = useState<Forest[]>([]);
   const [selectedForest, setSelectedForest] = useState<Forest | null>(null);
-
   const markerRefs = useRef<Record<number, L.Marker>>({});
 
-  useEffect(() => {
-    axios.get('/api/forests-map')
-      .then(res => setForests(res.data))
-      .catch(err => console.error('Lỗi khi load forests:', err));
-  }, []);
+  // Sử dụng hook chung để lấy dữ liệu
+  const { data: forests, loading, error } = useFetchData<Forest>(fetchAllForests);
 
   const handleOpenModal = (forest: Forest) => {
     setSelectedForest(forest);
-    const marker = markerRefs.current[forest.id];
-    if (marker) marker.closePopup();
+    markerRefs.current[forest.id]?.closePopup();
   };
 
   const handleCloseModal = () => {
     setSelectedForest(null);
   };
 
-  const MapEffects = ({ forest }: { forest: Forest | null }) => {
-    const map = useMap();
+  // Xử lý trạng thái loading và error
+  if (loading) {
+    return <div className="map-loading-state">Đang tải bản đồ và dữ liệu...</div>;
+  }
 
-    useEffect(() => {
-      setTimeout(() => map.invalidateSize(), 300); // Resize bất kể mở hay đóng panel
-      if (forest) map.flyTo([forest.lat, forest.lng], 13, { duration: 1.5 });
-    }, [forest]);
-
-    return null;
-  };
-
-  const navigate = useNavigate();
-
+  if (error) {
+    return <div className="map-error-state">Lỗi khi tải dữ liệu. Vui lòng thử lại.</div>;
+  }
 
   return (
-    <div style={{ height: '100vh', width: '100%', display: 'flex' }}>
-      {/* Bản đồ chiếm 100% hoặc 45% khi mở panel */}
-      <div style={{ width: selectedForest ? '45%' : '100%', height: '100%' }}>
-          {/* Nút quay lại */}
-  <button
-    onClick={() => navigate('/')}
-    style={{
-      position: 'absolute',
-      top: 20,
-      right: 20,
-      zIndex: 1000,
-      padding: '8px 12px',
-      backgroundColor: '#ffffff',
-      border: '1px solid #ccc',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-    }}
-  >
-    ← Quay lại
-  </button>
+    <div className="forest-map-container">
+      {/* Phần bản đồ */}
+      <div className={`map-wrapper ${selectedForest ? 'panel-open' : ''}`}>
+        <BackButton />
         <MapContainer center={[16.5, 107.5]} zoom={6} style={{ height: '100%', width: '100%' }}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapEffects forest={selectedForest} />
+
           {forests.map(forest => (
             <Marker
               key={forest.id}
               position={[forest.lat, forest.lng]}
               ref={ref => {
-                if (ref && ref instanceof L.Marker) {
-                  markerRefs.current[forest.id] = ref;
-                }
+                if (ref) markerRefs.current[forest.id] = ref;
               }}
             >
               <Popup>
                 <strong>{forest.name}</strong><br />
-                <img
-                  src={forest.image_url}
-                  alt={forest.name}
-                  style={{
-                    width: '100%',
-                    maxHeight: '120px',
-                    objectFit: 'cover',
-                    margin: '5px 0'
-                  }}
-                />
+                <img src={forest.image_url} alt={forest.name} className="popup-image" />
                 <div>{forest.description}</div>
                 <Button
                   variant="primary"
@@ -128,26 +125,9 @@ const ForestsMap = () => {
         </MapContainer>
       </div>
 
-      {/* Panel chi tiết */}
+      {/* Panel chi tiết, chỉ hiện khi có selectedForest */}
       {selectedForest && (
-        <div className={`detail-panel show`}>
-          <h3>{selectedForest.name}</h3>
-          <img
-            src={selectedForest.image_url}
-            alt={selectedForest.name}
-            style={{
-              width: '100%',
-              maxHeight: '300px',
-              objectFit: 'cover',
-              marginBottom: '15px'
-            }}
-          />
-          <p><strong>{selectedForest.description}</strong></p>
-          <div dangerouslySetInnerHTML={{ __html: selectedForest.info }} />
-          <Button variant="secondary" onClick={handleCloseModal}>
-            Đóng
-          </Button>
-        </div>
+        <DetailPanel forest={selectedForest} onClose={handleCloseModal} />
       )}
     </div>
   );
