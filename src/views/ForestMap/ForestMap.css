@@ -17,3 +17,26 @@
 .detail-panel.show {
   transform: translateX(0);
 }
+
+.forest-map-container {
+  display: flex;
+  width: 100%;
+  height: 100vh; /* Chiếm toàn bộ chiều cao màn hình */
+  overflow: hidden; /* Tránh scroll không mong muốn */
+}
+
+.map-wrapper {
+  height: 100%;
+  width: 100%;
+  transition: width 0.5s ease-in-out; /* Hiệu ứng co giãn mượt mà */
+}
+
+.map-wrapper.panel-open {
+  width: 45%; /* Co lại khi panel chi tiết mở ra */
+}
+
+/* Đảm bảo leaflet container cũng chiếm hết không gian */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+}
