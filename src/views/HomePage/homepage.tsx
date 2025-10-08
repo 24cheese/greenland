@@ -20,7 +20,7 @@ import { useFetchData } from '../../hooks/useFetchData';
 import { fetchAllNews } from '../../api/newsApi';
 import { fetchAllProjects } from '../../api/projectApi';
 import { News } from '../../types/news';
-import { Project } from '../../types/Project';
+import { Project } from '../../types/project';
 import apiClient from '../../api/apiClient'; // Import apiClient để gửi form
 
 const HomePage = () => {
