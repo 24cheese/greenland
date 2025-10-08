@@ -5,3 +5,7 @@ import { AxiosResponse } from 'axios';
 export const fetchAllNews = (): Promise<AxiosResponse<News[]>> => {
   return apiClient.get('/api/news');
 };
+
+export const fetchNewsById = (id: string): Promise<AxiosResponse<News>> => {
+  return apiClient.get('/api/news/${id}')
+}
