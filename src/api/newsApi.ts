@@ -7,5 +7,5 @@ export const fetchAllNews = (): Promise<AxiosResponse<News[]>> => {
 };
 
 export const fetchNewsById = (id: string): Promise<AxiosResponse<News>> => {
-  return apiClient.get('/api/news/${id}')
-}
+  return apiClient.get(`/api/news/${id}`);
+};
