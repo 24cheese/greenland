@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, ProgressBar } from 'react-bootstrap';
 import { NavLink } from 'react-router-dom';
-
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFacebookF, faInstagram, faTwitter, faLinkedin } from '@fortawesome/free-brands-svg-icons';
-import { faAngleLeft, faAngleRight, faHeart, faCircleCheck, faLock } from '@fortawesome/free-solid-svg-icons';
+import { faHeart, faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import Layout from '../../layouts/Layout';
 import './donation.css';
 import http from '../../assets/image/http.png';
@@ -14,11 +12,19 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+// 1. Import hook chung, hàm API và kiểu dữ liệu
+import { useFetchData } from '../../hooks/useFetchData';
+import { fetchAllProjects } from '../../api/projectApi';
+import { Project } from '../../types/project';
+
 
 const Donation: React.FC = () => {
     const { t } = useTranslation();
 
+    // 2. Sử dụng hook để lấy dữ liệu projects
+    const { data: projects, loading, error } = useFetchData<Project>(fetchAllProjects);
+
+    // --- LOGIC KHÁC CỦA COMPONENT GIỮ NGUYÊN ---
     const [isScrolledPast, setIsScrolledPast] = useState(false);
     useEffect(() => {
         const handleScroll = () => setIsScrolledPast(window.scrollY > 0);
@@ -32,51 +38,59 @@ const Donation: React.FC = () => {
         speed: 500,
         slidesToShow: 1,
         slidesToScroll: 1,
-        prevArrow: <FontAwesomeIcon icon={faAngleLeft} />,
-        nextArrow: <FontAwesomeIcon icon={faAngleRight} />,
+        // Bỏ qua prevArrow và nextArrow nếu không có custom icon
     };
 
-    const [projects, setProjects] = useState<any[]>([]);
 
-    useEffect(() => {
-        axios.get('/api/projects')
-            .then(res => setProjects(res.data))
-            .catch(err => console.error('Lỗi tải dự án:', err));
-    }, []);
+    // Component con để render slider, giúp code chính gọn hơn
+    const renderProjectSlider = () => {
+        if (loading) {
+            return <p>Đang tải danh sách dự án...</p>;
+        }
+        if (error) {
+            return <p>Lỗi khi tải dự án. Vui lòng thử lại.</p>;
+        }
+        if (projects.length === 0) {
+            return <p>Hiện chưa có dự án nào.</p>;
+        }
+        return (
+            <Slider {...settings}>
+                {projects.map((project) => (
+                    <div key={project.id}>
+                        <Row>
+                            <Col lg={7}><img src={project.image_url} alt={project.title} /></Col>
+                            <Col lg={5}>
+                                <h2>{project.title} <br /> Project</h2>
+                                <p>{project.description}</p>
+                                <ProgressBar now={project.progress} />
+                                <div className="status">
+                                    <div className='donated'>{project.progress}% {t('donated')}</div>
+                                    <div className='goal'>{t('goal')}: {project.goal.toLocaleString()} VND</div>
+                                </div>
+                                <hr />
+                                <div className="button-group">
+                                    <NavLink to={`/projects/${project.id}`}>
+                                        <button className='button button-left'>{t('donate_now')}</button>
+                                    </NavLink>
+                                    <div className='follow'>
+                                        <a href="#" target='_blank'>
+                                            <button><FontAwesomeIcon icon={faHeart} /><span>{t('follow')}</span></button>
+                                        </a>
+                                    </div>
+                                </div>
+                            </Col>
+                        </Row>
+                    </div>
+                ))}
+            </Slider>
+        );
+    };
 
     return (
         <Layout>
             <div id="project">
                 <Container>
-                    <Slider {...settings}>
-                        {projects.map((project, index) => (
-                            <div key={index}>
-                                <Row>
-                                    <Col lg={7}><img src={project.image_url} alt="" /></Col>
-                                    <Col lg={5}>
-                                        <h2>{project.title} <br /> Project</h2>
-                                        <p>{project.description}</p>
-                                        <ProgressBar now={project.progress} />
-                                        <div className="status">
-                                            <div className='donated'>{project.progress}% {t('donated')}</div>
-                                            <div className='goal'>{t('goal')}: {project.goal}</div>
-                                        </div>
-                                        <hr />
-                                        <div className="button-group">
-                                            <NavLink to={`/projects/${project.id}`}>
-                                                <button className='button button-left'>{t('donate_now')}</button>
-                                            </NavLink>
-                                            <div className='follow'>
-                                                <a href="#" target='_blank'>
-                                                    <button><FontAwesomeIcon icon={faHeart} /><span>{t('follow')}</span></button>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </Col>
-                                </Row>
-                            </div>
-                        ))}
-                    </Slider>
+                    {renderProjectSlider()}
                 </Container>
             </div>
 
